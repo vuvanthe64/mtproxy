@@ -264,6 +264,8 @@ MTPROXY_EXEC_FILENAME="mtproto-proxy"
 PROXY_EXEC_FULL_PATH="${WORKING_DIR_EXEC}/${MTPROXY_EXEC_FILENAME}"
 # URL Script trên GitHub của bạn (thay thế nếu cần)
 YOUR_GITHUB_SCRIPT_URL="https://raw.githubusercontent.com/vuvanthe64/mtproxy/main/install_mtproxy.sh"
+# Đề xuất vị trí lưu script cục bộ
+LOCAL_SCRIPT_SUGGESTED_PATH="/usr/local/sbin/manage_mtproxy.sh"
 
 
 # --- Hàm tiện ích ---
@@ -491,11 +493,12 @@ WantedBy=multi-user.target"
     log_and_echo "  - Xem log:   sudo journalctl -u ${SERVICE_NAME_FOR_NEW_INSTANCE} -f"
     log_and_echo "---------------------------------------------------------------------"
     log_and_echo "Để XÓA HOÀN TOÀN instance proxy VỪA TẠO (port ${RANDOM_PORT}):"
-    log_and_echo "  CÁCH 1: Chạy lại lệnh từ GitHub (luôn lấy bản mới nhất, thay YOUR_GITHUB_SCRIPT_URL nếu cần):"
+    log_and_echo "  CÁCH 1: Chạy lại lệnh từ GitHub (luôn lấy bản mới nhất):"
     log_and_echo "    curl -sSL \"${YOUR_GITHUB_SCRIPT_URL}?$(date +%s)\" | sudo bash -s remove ${RANDOM_PORT}"
-    log_and_echo "  CÁCH 2: Nếu bạn đã lưu script này vào file trên VPS (ví dụ: /root/install_mtproxy.sh):"
-    log_and_echo "    sudo bash /root/install_mtproxy.sh remove ${RANDOM_PORT}"
-    log_and_echo "    (Hãy thay '/root/install_mtproxy.sh' bằng đường dẫn thực tế của bạn nếu khác)"
+    log_and_echo "  CÁCH 2: Nếu bạn muốn lưu script này vào file trên VPS để dùng lại:"
+    log_and_echo "    1. Lưu script: sudo curl -sSL \"${YOUR_GITHUB_SCRIPT_URL}?$(date +%s)\" -o \"${LOCAL_SCRIPT_SUGGESTED_PATH}\" && sudo chmod +x \"${LOCAL_SCRIPT_SUGGESTED_PATH}\""
+    log_and_echo "    2. Sau đó chạy: sudo bash \"${LOCAL_SCRIPT_SUGGESTED_PATH}\" remove ${RANDOM_PORT}"
+    log_and_echo "       (Bạn có thể thay thế \"${LOCAL_SCRIPT_SUGGESTED_PATH}\" bằng đường dẫn bạn muốn lưu)"
     log_and_echo "---------------------------------------------------------------------"
     log_and_echo "Thông tin cấu hình này lưu tại: ${CONFIG_INFO_FILE_INSTANCE}"
     log_and_echo "Xem tất cả config đã lưu: ls -l ${CONFIG_FILES_STORAGE_DIR}"
