@@ -124,17 +124,14 @@ fi
 log_and_echo "Địa chỉ IP của máy chủ: $SERVER_IP"
 echo ""
 
-# --- Hiển thị kết quả ---
+# --- Chuẩn bị thông tin chạy và link ---
 PROXY_RUN_COMMAND="${PROXY_EXEC_PATH} -u nobody -p 8888 -H ${RANDOM_PORT} -S ${NEW_CLIENT_SECRET} --aes-pwd official-proxy-secret proxy-multi.conf -M 1"
 TG_LINK="tg://proxy?server=${SERVER_IP}&port=${RANDOM_PORT}&secret=${NEW_CLIENT_SECRET}"
-
 LOG_PROXY_OUTPUT_FILE="${WORKING_DIR}/mtproxy_runtime.log"
 
 log_and_echo "===================================================================="
 log_and_echo "CÀI ĐẶT HOÀN TẤT! ĐANG CHUẨN BỊ KHỞI CHẠY..."
 log_and_echo "===================================================================="
-log_and_echo "LINK KẾT NỐI TELEGRAM CỦA BẠN:"
-log_and_echo "   ${TG_LINK}"
 log_and_echo "--------------------------------------------------------------------"
 log_and_echo "Lệnh chạy proxy (sẽ tự động chạy ở nền):"
 log_and_echo "   nohup ${PROXY_RUN_COMMAND} > ${LOG_PROXY_OUTPUT_FILE} 2>&1 &"
@@ -172,11 +169,10 @@ done
 
 if ${PROXY_RUNNING}; then
     log_and_echo "✅ THÀNH CÔNG: Proxy MTProto dường như đã được khởi chạy và đang lắng nghe trên port ${RANDOM_PORT}."
-    log_and_echo "Bạn có thể sử dụng link trên để kết nối."
 else
     log_and_echo "⚠️ CẢNH BÁO: Script không thể tự động xác nhận proxy đang chạy trên port ${RANDOM_PORT}."
     log_and_echo "Tuy nhiên, proxy CÓ THỂ VẪN ĐANG HOẠT ĐỘNG BÌNH THƯỜNG NẾU KHÔNG CÓ LỖI NGHIÊM TRỌNG TRONG LOG."
-    log_and_echo "HÃY THỬ KẾT NỐI BẰNG LINK TELEGRAM ĐƯỢC CUNG CẤP."
+    log_and_echo "HÃY THỬ KẾT NỐI BẰNG LINK TELEGRAM ĐƯỢC CUNG CẤP (sẽ hiển thị ở cuối)."
     log_and_echo "KIỂM TRA KỸ file log để biết chi tiết:"
     log_and_echo "   cat ${LOG_PROXY_OUTPUT_FILE}"
 fi
@@ -185,5 +181,18 @@ echo ""
 log_and_echo "=================================================="
 log_and_echo "Script đã hoàn tất: $(date)"
 log_and_echo "=================================================="
+echo ""
+echo ""
+log_and_echo "*********************************************************************"
+log_and_echo "* LINK KẾT NỐI TELEGRAM CỦA BẠN:                                   *"
+log_and_echo "* ===>   ${TG_LINK}   <===                                          *"
+log_and_echo "*********************************************************************"
+echo ""
+log_and_echo "---------------------------------------------------------------------"
+log_and_echo "THÔNG TIN HỖ TRỢ & LIÊN HỆ:"
+log_and_echo "Telegram: @thevv"
+log_and_echo "Email: vuvanthe64@gmail.com"
+log_and_echo "---------------------------------------------------------------------"
+echo ""
 
 exit 0
