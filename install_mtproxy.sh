@@ -249,20 +249,22 @@
 # exit 0
 
 
+
+
 #!/bin/bash
 
 # Script tự động cài đặt, xóa, và quản lý NHIỀU INSTANCE MTProxy bằng systemd
 # Repository: GetPageSpeed/MTProxy
+# Script này sẽ cố gắng tự lưu một bản sao vào LOCAL_SCRIPT_SUGGESTED_PATH khi chạy install lần đầu.
 
 # --- Biến toàn cục ---
 REPO_DIR_BASE="/opt/MTProxy_GetPageSpeed" # Thư mục gốc cài đặt MTProxy
 WORKING_DIR_EXEC="${REPO_DIR_BASE}/objs/bin" # Nơi chứa file thực thi và config chung
 CONFIG_FILES_STORAGE_DIR="${REPO_DIR_BASE}/configs" # Thư mục lưu file thông tin của từng instance
-LOG_FILES_STORAGE_DIR="${REPO_DIR_BASE}/logs"     # Thư mục lưu log (nếu không dùng journald hoàn toàn)
 PACKAGES_INSTALLED_MARKER="${REPO_DIR_BASE}/.packages_installed"
 MTPROXY_EXEC_FILENAME="mtproto-proxy"
 PROXY_EXEC_FULL_PATH="${WORKING_DIR_EXEC}/${MTPROXY_EXEC_FILENAME}"
-# URL Script trên GitHub của bạn (thay thế nếu cần)
+# URL Script trên GitHub của bạn (quan trọng để script tự lưu)
 YOUR_GITHUB_SCRIPT_URL="https://raw.githubusercontent.com/vuvanthe64/mtproxy/main/install_mtproxy.sh"
 # Đề xuất vị trí lưu script cục bộ
 LOCAL_SCRIPT_SUGGESTED_PATH="/usr/local/sbin/manage_mtproxy.sh"
@@ -285,56 +287,31 @@ remove_mtproxy_instance() {
     log_and_echo "Dịch vụ tương ứng: ${SERVICE_NAME_INSTANCE}"
     log_and_echo "=============================================================="
 
-    # Dừng dịch vụ nếu đang chạy
     if systemctl is-active --quiet "${SERVICE_NAME_INSTANCE}"; then
         log_and_echo "Đang dừng dịch vụ ${SERVICE_NAME_INSTANCE}..."
-        sudo systemctl stop "${SERVICE_NAME_INSTANCE}"
-        if [ $? -eq 0 ]; then log_and_echo "Dịch vụ ${SERVICE_NAME_INSTANCE} đã được dừng."; else log_and_echo "Cảnh báo: Lỗi khi dừng ${SERVICE_NAME_INSTANCE}."; fi
-    else
-        log_and_echo "Thông báo: Dịch vụ ${SERVICE_NAME_INSTANCE} không ở trạng thái active."
-    fi
-
-    # Vô hiệu hóa dịch vụ
+        sudo systemctl stop "${SERVICE_NAME_INSTANCE}"; else log_and_echo "Thông báo: Dịch vụ ${SERVICE_NAME_INSTANCE} không active."; fi
     if systemctl is-enabled --quiet "${SERVICE_NAME_INSTANCE}"; then
         log_and_echo "Đang vô hiệu hóa dịch vụ ${SERVICE_NAME_INSTANCE}..."
-        sudo systemctl disable "${SERVICE_NAME_INSTANCE}"
-        if [ $? -eq 0 ]; then log_and_echo "Dịch vụ ${SERVICE_NAME_INSTANCE} đã được vô hiệu hóa."; else log_and_echo "Cảnh báo: Lỗi khi vô hiệu hóa ${SERVICE_NAME_INSTANCE}."; fi
-    else
-        log_and_echo "Thông báo: Dịch vụ ${SERVICE_NAME_INSTANCE} không ở trạng thái enabled."
-    fi
-
-    # Xóa file unit của dịch vụ
+        sudo systemctl disable "${SERVICE_NAME_INSTANCE}"; else log_and_echo "Thông báo: Dịch vụ ${SERVICE_NAME_INSTANCE} không enabled."; fi
     if [ -f "${SERVICE_FILE_PATH}" ]; then
         log_and_echo "Đang xóa file dịch vụ ${SERVICE_FILE_PATH}..."
-        sudo rm -f "${SERVICE_FILE_PATH}"
-        if [ $? -eq 0 ]; then log_and_echo "Đã xóa file dịch vụ thành công."; else log_and_echo "LỖI: Không thể xóa ${SERVICE_FILE_PATH}."; fi
-    else
-        log_and_echo "Thông báo: File dịch vụ ${SERVICE_FILE_PATH} không tồn tại."
-    fi
-
-    # Đóng port trên firewall UFW
+        sudo rm -f "${SERVICE_FILE_PATH}"; else log_and_echo "Thông báo: File dịch vụ ${SERVICE_FILE_PATH} không tồn tại."; fi
+    
     log_and_echo "Đang kiểm tra và đóng port ${PORT_NUMBER}/tcp trên firewall UFW..."
-    RULE_EXISTS=$(sudo ufw status verbose | grep -qw "${PORT_NUMBER}/tcp.*ALLOW IN" && echo "true" || echo "false")
-    if [ "$RULE_EXISTS" = "true" ]; then
+    if sudo ufw status verbose | grep -qw "${PORT_NUMBER}/tcp.*ALLOW IN"; then
         sudo ufw delete allow "${PORT_NUMBER}/tcp" > /dev/null 2>&1
         log_and_echo "Đã gửi lệnh xóa rule cho port ${PORT_NUMBER}/tcp."
     else
-        log_and_echo "Thông báo: Rule cho port ${PORT_NUMBER}/tcp không được tìm thấy trong UFW hoặc đã được xóa."
+        log_and_echo "Thông báo: Rule cho port ${PORT_NUMBER}/tcp không được tìm thấy trong UFW."
     fi
 
-    # Xóa file thông tin cấu hình
     if [ -f "${CONFIG_INFO_FILE_INSTANCE}" ]; then
         log_and_echo "Đang xóa file thông tin cấu hình ${CONFIG_INFO_FILE_INSTANCE}..."
-        sudo rm -f "${CONFIG_INFO_FILE_INSTANCE}"
-        if [ $? -eq 0 ]; then log_and_echo "Đã xóa file thông tin cấu hình thành công."; else log_and_echo "LỖI: Không thể xóa ${CONFIG_INFO_FILE_INSTANCE}."; fi
-    else
-        log_and_echo "Thông báo: File thông tin cấu hình ${CONFIG_INFO_FILE_INSTANCE} không tồn tại."
-    fi
+        sudo rm -f "${CONFIG_INFO_FILE_INSTANCE}"; else log_and_echo "Thông báo: File thông tin cấu hình ${CONFIG_INFO_FILE_INSTANCE} không tồn tại."; fi
 
     log_and_echo "Đang tải lại cấu hình systemd và UFW..."
     sudo systemctl daemon-reload
     sudo ufw reload > /dev/null 2>&1
-
     log_and_echo "=============================================================="
     log_and_echo "Hoàn tất quá trình xóa instance MTProxy cho port ${PORT_NUMBER}."
     log_and_echo "=============================================================="
@@ -347,8 +324,26 @@ install_new_mtproxy_instance() {
     log_and_echo "=================================================="
     echo ""
 
+    # --- Tự động lưu script nếu chưa có bản cục bộ ---
+    if [ ! -f "${LOCAL_SCRIPT_SUGGESTED_PATH}" ]; then
+        log_and_echo "Lần đầu chạy hoặc file script cục bộ không tìm thấy tại ${LOCAL_SCRIPT_SUGGESTED_PATH}."
+        log_and_echo "Đang cố gắng tải và lưu script này để sử dụng sau..."
+        if sudo curl -sSL "${YOUR_GITHUB_SCRIPT_URL}?$(date +%s)" -o "${LOCAL_SCRIPT_SUGGESTED_PATH}"; then
+            sudo chmod +x "${LOCAL_SCRIPT_SUGGESTED_PATH}"
+            log_and_echo "✅ Script đã được lưu thành công vào: ${LOCAL_SCRIPT_SUGGESTED_PATH}"
+            log_and_echo "   Lần sau, bạn có thể chạy lệnh cài đặt bằng: sudo bash ${LOCAL_SCRIPT_SUGGESTED_PATH}"
+            log_and_echo "   Hoặc lệnh xóa bằng: sudo bash ${LOCAL_SCRIPT_SUGGESTED_PATH} remove <PORT>"
+        else
+            log_and_echo "⚠️ CẢNH BÁO: Không thể tự động lưu script vào ${LOCAL_SCRIPT_SUGGESTED_PATH}."
+            log_and_echo "   Bạn vẫn có thể chạy script qua curl từ GitHub."
+            log_and_echo "   Nếu muốn lưu thủ công, hãy chạy (thay thế URL nếu cần):"
+            echo "       sudo curl -sSL \"${YOUR_GITHUB_SCRIPT_URL}?$(date +%s)\" -o \"${LOCAL_SCRIPT_SUGGESTED_PATH}\" && sudo chmod +x \"${LOCAL_SCRIPT_SUGGESTED_PATH}\""
+        fi
+        echo ""
+    fi
+
     mkdir -p "${CONFIG_FILES_STORAGE_DIR}"
-    mkdir -p "${LOG_FILES_STORAGE_DIR}" # Hiện không dùng nhưng để sẵn
+    # WORKING_DIR_BASE sẽ được tạo bởi git clone
 
     # --- Bước 1: Cập nhật và cài đặt gói phụ thuộc (chỉ nếu cần) ---
     if [ ! -f "${PACKAGES_INSTALLED_MARKER}" ]; then
@@ -486,6 +481,12 @@ WantedBy=multi-user.target"
     log_and_echo "=================================================="
     echo ""
     log_and_echo "---------------------------------------------------------------------"
+    log_and_echo "Để TẠO THÊM một instance MTProxy MỚI KHÁC:"
+    log_and_echo "  CÁCH 1 (Luôn lấy bản mới nhất từ GitHub):"
+    echo "    curl -sSL \"${YOUR_GITHUB_SCRIPT_URL}?$(date +%s)\" | sudo bash"
+    log_and_echo "  CÁCH 2 (Nếu script đã được lưu cục bộ tại \"${LOCAL_SCRIPT_SUGGESTED_PATH}\"):"
+    echo "    sudo bash \"${LOCAL_SCRIPT_SUGGESTED_PATH}\""
+    log_and_echo "---------------------------------------------------------------------"
     log_and_echo "Quản lý dịch vụ VỪA TẠO (${SERVICE_NAME_FOR_NEW_INSTANCE}):"
     log_and_echo "  - Trạng thái: sudo systemctl status ${SERVICE_NAME_FOR_NEW_INSTANCE}"
     log_and_echo "  - Dừng:       sudo systemctl stop ${SERVICE_NAME_FOR_NEW_INSTANCE}"
@@ -494,14 +495,9 @@ WantedBy=multi-user.target"
     log_and_echo "---------------------------------------------------------------------"
     log_and_echo "Để XÓA HOÀN TOÀN instance proxy VỪA TẠO (port ${RANDOM_PORT}):"
     log_and_echo "  CÁCH 1: Chạy lại lệnh từ GitHub (luôn lấy bản mới nhất):"
-    log_and_echo "    curl -sSL \"${YOUR_GITHUB_SCRIPT_URL}?$(date +%s)\" | sudo bash -s remove ${RANDOM_PORT}"
-    log_and_echo "  CÁCH 2: Nếu bạn muốn LƯU và CHẠY script này từ file cục bộ trên VPS:"
-    log_and_echo "    1. LƯU SCRIPT (chạy một lần):"
-    log_and_echo "       sudo curl -sSL \"${YOUR_GITHUB_SCRIPT_URL}?$(date +%s)\" -o \"${LOCAL_SCRIPT_SUGGESTED_PATH}\" && sudo chmod +x \"${LOCAL_SCRIPT_SUGGESTED_PATH}\""
-    log_and_echo "       (Script sẽ được lưu tại: ${LOCAL_SCRIPT_SUGGESTED_PATH})"
-    log_and_echo "    2. SAU ĐÓ, ĐỂ XÓA, CHẠY LỆNH:"
-    log_and_echo "       sudo bash \"${LOCAL_SCRIPT_SUGGESTED_PATH}\" remove ${RANDOM_PORT}"
-    log_and_echo "       (Bạn có thể thay thế \"${LOCAL_SCRIPT_SUGGESTED_PATH}\" bằng đường dẫn khác nếu bạn lưu ở nơi khác)"
+    echo "    curl -sSL \"${YOUR_GITHUB_SCRIPT_URL}?$(date +%s)\" | sudo bash -s remove ${RANDOM_PORT}"
+    log_and_echo "  CÁCH 2: Chạy từ file script đã được lưu cục bộ (nếu có tại \"${LOCAL_SCRIPT_SUGGESTED_PATH}\"):"
+    echo "    sudo bash \"${LOCAL_SCRIPT_SUGGESTED_PATH}\" remove ${RANDOM_PORT}"
     log_and_echo "---------------------------------------------------------------------"
     log_and_echo "Thông tin cấu hình này lưu tại: ${CONFIG_INFO_FILE_INSTANCE}"
     log_and_echo "Xem tất cả config đã lưu: ls -l ${CONFIG_FILES_STORAGE_DIR}"
