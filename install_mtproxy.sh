@@ -262,6 +262,9 @@ LOG_FILES_STORAGE_DIR="${REPO_DIR_BASE}/logs"     # Thư mục lưu log (nếu k
 PACKAGES_INSTALLED_MARKER="${REPO_DIR_BASE}/.packages_installed"
 MTPROXY_EXEC_FILENAME="mtproto-proxy"
 PROXY_EXEC_FULL_PATH="${WORKING_DIR_EXEC}/${MTPROXY_EXEC_FILENAME}"
+# URL Script trên GitHub của bạn (thay thế nếu cần)
+YOUR_GITHUB_SCRIPT_URL="https://raw.githubusercontent.com/vuvanthe64/mtproxy/main/install_mtproxy.sh"
+
 
 # --- Hàm tiện ích ---
 log_and_echo() {
@@ -488,8 +491,11 @@ WantedBy=multi-user.target"
     log_and_echo "  - Xem log:   sudo journalctl -u ${SERVICE_NAME_FOR_NEW_INSTANCE} -f"
     log_and_echo "---------------------------------------------------------------------"
     log_and_echo "Để XÓA HOÀN TOÀN instance proxy VỪA TẠO (port ${RANDOM_PORT}):"
-    log_and_echo "  Chạy lại script với lệnh (thay YOUR_SCRIPT_URL bằng URL script của bạn):"
-    log_and_echo "  curl -sSL YOUR_SCRIPT_URL | sudo bash -s remove ${RANDOM_PORT}"
+    log_and_echo "  CÁCH 1: Chạy lại lệnh từ GitHub (luôn lấy bản mới nhất, thay YOUR_GITHUB_SCRIPT_URL nếu cần):"
+    log_and_echo "    curl -sSL \"${YOUR_GITHUB_SCRIPT_URL}?$(date +%s)\" | sudo bash -s remove ${RANDOM_PORT}"
+    log_and_echo "  CÁCH 2: Nếu bạn đã lưu script này vào file trên VPS (ví dụ: /root/install_mtproxy.sh):"
+    log_and_echo "    sudo bash /root/install_mtproxy.sh remove ${RANDOM_PORT}"
+    log_and_echo "    (Hãy thay '/root/install_mtproxy.sh' bằng đường dẫn thực tế của bạn nếu khác)"
     log_and_echo "---------------------------------------------------------------------"
     log_and_echo "Thông tin cấu hình này lưu tại: ${CONFIG_INFO_FILE_INSTANCE}"
     log_and_echo "Xem tất cả config đã lưu: ls -l ${CONFIG_FILES_STORAGE_DIR}"
