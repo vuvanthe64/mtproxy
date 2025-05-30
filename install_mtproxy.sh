@@ -189,7 +189,6 @@ log_and_echo "------------------------------------------------------------------
 log_and_echo "THÔNG TIN HỖ TRỢ & LIÊN HỆ:"
 log_and_echo "Telegram: @thevv"
 log_and_echo "Email: vuvanthe64@gmail.com"
-log_and_echo "---------------------------------------------------------------------"
 echo ""
 
 exit 0
