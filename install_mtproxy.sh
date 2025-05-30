@@ -219,26 +219,31 @@ else
 fi
 
 echo ""
+log_and_echo "=================================================="
 log_and_echo "Script đã hoàn tất việc tạo instance mới: $(date)"
-echo ""
+log_and_echo "=================================================="
 # Phần hiển thị link và thông tin liên hệ được di chuyển xuống dưới
 echo ""
+log_and_echo "---------------------------------------------------------------------"
 log_and_echo "Quản lý dịch vụ VỪA TẠO (${SERVICE_NAME_INSTANCE}):"
 log_and_echo "  - Kiểm tra trạng thái: sudo systemctl status ${SERVICE_NAME_INSTANCE}"
 log_and_echo "  - Dừng dịch vụ:       sudo systemctl stop ${SERVICE_NAME_INSTANCE}"
 log_and_echo "  - Khởi động dịch vụ:  sudo systemctl start ${SERVICE_NAME_INSTANCE}"
 log_and_echo "  - Xem log trực tiếp:   sudo journalctl -u ${SERVICE_NAME_INSTANCE} -f -n 100"
-echo ""
+log_and_echo "---------------------------------------------------------------------"
 log_and_echo "Thông tin cấu hình chi tiết của instance này đã được lưu tại: ${CONFIG_INFO_FILE_INSTANCE}"
 log_and_echo "Để xem danh sách các file cấu hình đã tạo: ls -l ${CONFIG_FILES_DIR}"
 log_and_echo "Để xem danh sách các service mtproxy đang chạy: systemctl list-units 'mtproxy-*.service' --state=active"
+log_and_echo "---------------------------------------------------------------------"
 echo "" # Thêm dòng trống trước link
 log_and_echo "🔗 LINK KẾT NỐI TELEGRAM CHO PROXY MỚI"
 log_and_echo "${TG_LINK}"
+log_and_echo "=================================================="
 echo ""
 log_and_echo "THÔNG TIN HỖ TRỢ & LIÊN HỆ:"
 log_and_echo "Telegram: @thevv"
 log_and_echo "Email: vuvanthe64@gmail.com"
+log_and_echo "---------------------------------------------------------------------"
 echo ""
 
 exit 0
