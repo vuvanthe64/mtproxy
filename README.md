@@ -97,10 +97,4 @@ nohup ./mtproto-proxy -u nobody -p <PORT> -H 443 -S <SECRET> --aes-pwd proxy-sec
 
 ---
 
-## 📄 Giấy phép
-
-Phát hành dưới [MIT License](LICENSE).
-
----
-
 **Chúc bạn thành công 🎉 và có một proxy Telegram riêng tư và ổn định!**
