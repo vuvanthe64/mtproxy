@@ -1,11 +1,5 @@
 #!/bin/bash
 
-# Script tự động cài đặt và khởi chạy MTProxy từ GitHub
-# PHIÊN BẢN NÀY ĐƯỢC TỐI ƯU DỰA TRÊN PHẢN HỒI:
-# - Sử dụng repository GetPageSpeed/MTProxy
-# - Xử lý secret và chạy lệnh tương tự phiên bản cũ
-# - Kiểm tra kỹ việc tải file proxy-multi.conf
-
 # Hàm ghi log và hiển thị ra màn hình
 log_and_echo() {
     echo "$1"
