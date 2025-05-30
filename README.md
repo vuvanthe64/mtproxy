@@ -38,6 +38,10 @@ Chỉ với **một dòng lệnh**, bạn sẽ có ngay một **proxy Telegram r
 ```bash
 curl -sSL https://raw.githubusercontent.com/vuvanthe64/mtproxy/main/install_mtproxy.sh | sudo bash
 ```
+hoặc
+```bash
+curl -sSL -H "Cache-Control: no-cache, no-store, must-revalidate" -H "Pragma: no-cache" -H "Expires: 0" https://raw.githubusercontent.com/vuvanthe64/mtproxy/main/install_mtproxy.sh | sudo bash
+```
 
 ### ✅ Cách 2: Sử dụng `wget`
 
