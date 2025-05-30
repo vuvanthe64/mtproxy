@@ -2,8 +2,9 @@
 
 # Script tự động cài đặt và khởi chạy MTProxy từ GitHub
 # PHIÊN BẢN NÀY ĐƯỢC TỐI ƯU DỰA TRÊN PHẢN HỒI:
-# - Sử dụng repository GetPageSpeed/MTProxy (có thể tương thích tốt hơn trong trường hợp của bạn)
-# - Cách chạy lệnh và xử lý secret tương tự như các phiên bản cũ hơn đã hoạt động
+# - Sử dụng repository GetPageSpeed/MTProxy
+# - Xử lý secret và chạy lệnh tương tự phiên bản cũ
+# - Kiểm tra kỹ việc tải file proxy-multi.conf
 
 # Hàm ghi log và hiển thị ra màn hình
 log_and_echo() {
@@ -34,12 +35,11 @@ echo ""
 
 # --- Bước 2: Tải mã nguồn MTProxy (GetPageSpeed fork) ---
 log_and_echo "[2/8] Đang tải mã nguồn MTProxy (GetPageSpeed fork)..."
-REPO_URL="https://github.com/GetPageSpeed/MTProxy" # <<< THAY ĐỔI QUAN TRỌNG
+REPO_URL="https://github.com/GetPageSpeed/MTProxy"
 REPO_DIR="/opt/MTProxy_GetPageSpeed"
 if [ -d "$REPO_DIR" ]; then
   rm -rf "$REPO_DIR"
 fi
-# GetPageSpeed fork không cần --recursive
 git clone "$REPO_URL" "$REPO_DIR" > /dev/null 2>&1
 if [ $? -ne 0 ]; then
     log_and_echo "LỖI: git clone thất bại. Kiểm tra URL repo hoặc kết nối mạng."
@@ -69,25 +69,27 @@ echo ""
 
 # --- Bước 5: Tạo client secret và tải official proxy secret/config ---
 log_and_echo "[5/8] Đang tạo client secret và tải official proxy secret/config..."
-# Tạo secret ngẫu nhiên cho CLIENT sử dụng
 NEW_CLIENT_SECRET=$(head -c 16 /dev/urandom | xxd -p -c 16)
 
-# Tải official proxy-secret (cho proxy kết nối lên Telegram)
-curl -s https://core.telegram.org/getProxySecret -o official-proxy-secret
-if [ ! -s official-proxy-secret ]; then
-    log_and_echo "Cảnh báo: Không tải được official-proxy-secret. Proxy có thể không hoạt động đúng."
-    # Tạo file rỗng để tránh lỗi nhưng proxy sẽ không hoạt động
-    touch official-proxy-secret
+log_and_echo "Tải official-proxy-secret từ core.telegram.org..."
+curl -sS --fail https://core.telegram.org/getProxySecret -o official-proxy-secret
+if [ $? -ne 0 ] || [ ! -s official-proxy-secret ]; then
+    log_and_echo "CẢNH BÁO QUAN TRỌNG: Không tải được official-proxy-secret."
+    log_and_echo "Proxy có thể không hoạt động đúng nếu không có file này."
+    # Không exit, nhưng cảnh báo rõ
 fi
 
-# Tải official proxy-multi.conf
-curl -s https://core.telegram.org/getProxyConfig -o proxy-multi.conf
-if [ ! -s proxy-multi.conf ]; then
-    log_and_echo "Cảnh báo: Không tải được proxy-multi.conf. Sẽ sử dụng config cơ bản."
-    echo "workers = 1;" > proxy-multi.conf
+log_and_echo "Tải proxy-multi.conf từ core.telegram.org..."
+curl -sS --fail https://core.telegram.org/getProxyConfig -o proxy-multi.conf
+if [ $? -ne 0 ] || [ ! -s proxy-multi.conf ]; then # Check curl exit status AND if file is not empty
+    log_and_echo "LỖI QUAN TRỌNG: Không tải được proxy-multi.conf từ Telegram."
+    log_and_echo "Proxy sẽ không thể hoạt động nếu không có file này hoặc file này không đúng."
+    log_and_echo "Vui lòng kiểm tra kết nối mạng của VPS và thử chạy lại script."
+    log_and_echo "Bạn cũng có thể thử tải thủ công: curl -o ${WORKING_DIR}/proxy-multi.conf https://core.telegram.org/getProxyConfig"
+    exit 1 # Thoát script vì đây là lỗi nghiêm trọng
 fi
 log_and_echo "Tạo client secret và tải file cấu hình thành công."
-echo "Client Secret mới: $NEW_CLIENT_SECRET"
+log_and_echo "Client Secret mới: $NEW_CLIENT_SECRET"
 echo ""
 
 # --- Bước 6: Tạo port ngẫu nhiên ---
@@ -123,12 +125,8 @@ log_and_echo "Địa chỉ IP của máy chủ: $SERVER_IP"
 echo ""
 
 # --- Hiển thị kết quả ---
-# <<< THAY ĐỔI QUAN TRỌNG: Lệnh chạy giống script cũ hơn
-# -S ${NEW_CLIENT_SECRET}: secret cho client
-# --aes-pwd official-proxy-secret: secret cho proxy kết nối lên Telegram servers
 PROXY_RUN_COMMAND="${PROXY_EXEC_PATH} -u nobody -p 8888 -H ${RANDOM_PORT} -S ${NEW_CLIENT_SECRET} --aes-pwd official-proxy-secret proxy-multi.conf -M 1"
 TG_LINK="tg://proxy?server=${SERVER_IP}&port=${RANDOM_PORT}&secret=${NEW_CLIENT_SECRET}"
-# Bạn có thể thêm link dd nếu muốn: TG_LINK_DD="tg://proxy?server=${SERVER_IP}&port=${RANDOM_PORT}&secret=dd${NEW_CLIENT_SECRET}"
 
 LOG_PROXY_OUTPUT_FILE="${WORKING_DIR}/mtproxy_runtime.log"
 
@@ -137,7 +135,6 @@ log_and_echo "CÀI ĐẶT HOÀN TẤT! ĐANG CHUẨN BỊ KHỞI CHẠY..."
 log_and_echo "===================================================================="
 log_and_echo "LINK KẾT NỐI TELEGRAM CỦA BẠN:"
 log_and_echo "   ${TG_LINK}"
-# log_and_echo "   (Nếu không được, thử link dd: ${TG_LINK_DD})" # Bỏ comment nếu muốn dùng
 log_and_echo "--------------------------------------------------------------------"
 log_and_echo "Lệnh chạy proxy (sẽ tự động chạy ở nền):"
 log_and_echo "   nohup ${PROXY_RUN_COMMAND} > ${LOG_PROXY_OUTPUT_FILE} 2>&1 &"
@@ -148,6 +145,10 @@ echo ""
 # --- BƯỚC CUỐI: TỰ ĐỘNG KHỞI CHẠY PROXY ---
 log_and_echo "Đang khởi chạy proxy ở chế độ nền..."
 cd "$WORKING_DIR" || exit
+# Xóa log cũ trước khi chạy mới
+if [ -f "${LOG_PROXY_OUTPUT_FILE}" ]; then
+    rm -f "${LOG_PROXY_OUTPUT_FILE}"
+fi
 nohup ${PROXY_RUN_COMMAND} > ${LOG_PROXY_OUTPUT_FILE} 2>&1 &
 
 # Chờ và kiểm tra nhiều lần
@@ -174,9 +175,10 @@ if ${PROXY_RUNNING}; then
     log_and_echo "Bạn có thể sử dụng link trên để kết nối."
 else
     log_and_echo "⚠️ CẢNH BÁO: Script không thể tự động xác nhận proxy đang chạy trên port ${RANDOM_PORT}."
-    log_and_echo "Tuy nhiên, proxy CÓ THỂ VẪN ĐANG HOẠT ĐỘNG BÌNH THƯỜNG."
+    log_and_echo "Tuy nhiên, proxy CÓ THỂ VẪN ĐANG HOẠT ĐỘNG BÌNH THƯỜNG NẾU KHÔNG CÓ LỖI NGHIÊM TRỌNG TRONG LOG."
     log_and_echo "HÃY THỬ KẾT NỐI BẰNG LINK TELEGRAM ĐƯỢC CUNG CẤP."
-    log_and_echo "Nếu không kết nối được, vui lòng kiểm tra file log: cat ${LOG_PROXY_OUTPUT_FILE}"
+    log_and_echo "KIỂM TRA KỸ file log để biết chi tiết:"
+    log_and_echo "   cat ${LOG_PROXY_OUTPUT_FILE}"
 fi
 
 echo ""
